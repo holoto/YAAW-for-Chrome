@@ -40,7 +40,18 @@ function updateContextMenu () {
             }]
           }
           rpcLists.forEach(rpcItem => {
-            addContextMenu(rpcItem.path, rpcItem.name)
+            // addContextMenu(rpcItem.path, rpcItem.name)
+            chrome.contextMenus.create({
+              id: rpcItem.path,
+              title: rpcItem.name,
+              contexts: ['link']
+            })
+
+            chrome.contextMenus.create({
+              id: 'cloudflare-proxy-speedup',
+              title: 'cloudflare-speedup',
+              contexts: ['link']
+            })
           })
         })
       }
@@ -109,6 +120,7 @@ function generateParameter (authStr, path, data) {
   }
   return parameter
 }
+
 function aria2Send (rpcPath, fileDownloadInfo) {
   const { authStr, path, options } = parseURL(rpcPath)
   chrome.cookies.getAll({ url: fileDownloadInfo.link }, function (cookies) {
@@ -220,8 +232,27 @@ async function isCapture (downloadItem) {
 }
 
 chrome.contextMenus.onClicked.addListener(function (info, tab) {
-  aria2Send(info.menuItemId, {
-    link: info.linkUrl
+  // aria2Send(info.menuItemId, {
+  //     link: info.linkUrl
+  // })
+
+  getConfig('rpcLists').then(({ rpcLists }) => {
+    if (!rpcLists) {
+      rpcLists = [{
+        name: 'ARIA2 RPC',
+        path: defaultRPC
+      }]
+    };
+
+    if (info.menuItemId === 'cloudflare-proxy-speedup') {
+      aria2Send(rpcLists[0].path, {
+        link: 'https://githubspeedupdownloader.holoto.workers.dev/' + info.linkUrl
+      })
+    } else {
+      aria2Send(info.menuItemId, {
+        link: info.linkUrl
+      })
+    }
   })
 })
 
